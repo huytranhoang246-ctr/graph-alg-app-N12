@@ -1,0 +1,23 @@
+name: Build and Run C++ Project
+
+on:
+  push:
+    branches: [ main ] # Kích hoạt khi có commit mới được đẩy lên nhánh main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest # Chạy trên hệ điều hành Linux (Ubuntu)
+
+    steps:
+    - uses: actions/checkout@v4 # 1. Lấy code từ GitHub
+
+    - name: Install g++ compiler
+      run: sudo apt-get install g++ -y # 2. Cài đặt trình biên dịch
+
+    - name: Build C++ application
+      # Thay 'CTRR_BTL.cpp' bằng tên tệp C++ chính của bạn nếu cần
+      run: g++ CTRR_BTL.cpp -o app_output 
+
+    - name: Run C++ application
+      run: ./app_output
+      # Kết quả chạy của ứng dụng C++ sẽ được hiển thị ở đây.
