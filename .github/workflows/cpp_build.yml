@@ -1,23 +1,31 @@
+# Nội dung trong .github/workflows/cpp_build.yml
+
 name: Build and Run C++ Project
 
-on:
-  push:
-    branches: [ main ] # Kích hoạt khi có commit mới được đẩy lên nhánh main
+# ... (Phần on: và jobs: giữ nguyên)
 
 jobs:
   build:
-    runs-on: ubuntu-latest # Chạy trên hệ điều hành Linux (Ubuntu)
+    runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4 # 1. Lấy code từ GitHub
-
+    - uses: actions/checkout@v4
+    
+    # 1. Cài đặt g++
     - name: Install g++ compiler
-      run: sudo apt-get install g++ -y # 2. Cài đặt trình biên dịch
-
+      run: sudo apt-get install g++ -y 
+    
+    # 2. Biên dịch ứng dụng
     - name: Build C++ application
-      # Thay 'CTRR_BTL.cpp' bằng tên tệp C++ chính của bạn nếu cần
+      # Biên dịch tạo ra tệp thực thi có tên là 'app_output'
       run: g++ CTRR_BTL.cpp -o app_output 
-
+    
+    # 3. Chạy ứng dụng (Bước kiểm thử hiện tại của bạn)
     - name: Run C++ application
       run: ./app_output
-      # Kết quả chạy của ứng dụng C++ sẽ được hiển thị ở đây.
+      
+    # 4. BƯỚC MỚI: Tải tệp thực thi (Artifact)
+    - uses: actions/upload-artifact@v4
+      with:
+        name: cpp-graph-app-executable # Tên tệp nén bạn sẽ thấy trên GitHub
+        path: app_output # Chỉ định tệp thực thi đã được tạo ra
