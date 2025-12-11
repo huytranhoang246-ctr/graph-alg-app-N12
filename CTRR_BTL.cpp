@@ -1,4 +1,5 @@
 ﻿#include <iostream>
+#include <sstream>
 #include <vector>
 #include <fstream>
 #include <iomanip>
@@ -199,6 +200,47 @@ void saveGraph(const Graph& g, const string& filename) {
 
     out.close();
     cout << "Graph saved!\n";
+}
+
+Graph loadGraph(const string& filename) {
+    ifstream in(filename);
+    if (!in) {
+        cout << "Error: Khong the mo file de doc.\n";
+        return Graph();
+    }
+
+    string line;
+    int n = 0;
+    int dirFlag = 0;
+
+    // Doc so dinh
+    if (getline(in, line)) {
+        stringstream ss(line);
+        string keyword;
+        ss >> keyword >> n;
+    }
+
+    // Doc co huong hay khong
+    if (getline(in, line)) {
+        stringstream ss(line);
+        string keyword;
+        ss >> keyword >> dirFlag;
+    }
+
+    Graph g(n, dirFlag != 0);
+
+    // Bo qua dong tieu de
+    getline(in, line);
+
+    // Doc cac canh
+    int u, v, w;
+    while (in >> u >> v >> w) {
+        g.addEdge(u, v, w);
+    }
+
+    in.close();
+    cout << "Da tai do thi tu file '" << filename << "' thanh cong!\n";
+    return g;
 }
 // 3 Tìm đường đi ngắn nhất (Dijkstra)
 void dijkstra(const Graph& g, int src) {
@@ -619,7 +661,8 @@ vector<Edge> primMST(const Graph& g, bool verbose = true) {
 
 
         while (!pq.empty()) {
-            auto [w, v] = pq.top();
+            int w = pq.top().first;
+            int v = pq.top().second;
             pq.pop();
 
 
@@ -1025,175 +1068,231 @@ void printEdgeList_forMenu(vector<Edge>& edges) {
 
 // ======================= MAIN MENU =======================
 int main() {
-
-
-
+    // -------------------------------------------------------------
+    // GIAO DIỆN KHỞI ĐỘNG
+    // -------------------------------------------------------------
     Graph g;
     int n, m;
-    cout << "Nhap so dinh: "; if (!(cin >> n)) return 0;
-    cout << "Do thi co huong? (0=no 1=yes): ";
-    int dirFlag; cin >> dirFlag;
-    g = Graph(n, dirFlag != 0);
+    int initialChoice;
 
+    cout << "\n===== CHUONG TRINH PHAN TICH DO THI (C++) =====\n";
+    cout << "1. Nhap do thi bang tay\n";
+    cout << "2. Tai do thi tu file (graph.txt)\n";
+    cout << "Chon cach nhap: ";
+    if (!(cin >> initialChoice)) return 0;
 
-    cout << "Nhap so canh: "; cin >> m;
-    cout << "Nhap cac canh u v w :\n";
-    for (int i = 0;i < m;i++) {
-        int u, v, w; cin >> u >> v >> w;
-        g.addEdge(u, v, w);
+    if (initialChoice == 1) {
+        cout << "\n--- NHAP DO THI BANG TAY ---\n";
+        cout << "Nhap so dinh (N): "; if (!(cin >> n)) return 0;
+        cout << "Do thi co huong? (0=Vo huong, 1=Co huong): ";
+        int dirFlag; cin >> dirFlag;
+        g = Graph(n, dirFlag != 0);
+
+        cout << "Nhap so canh (M): "; cin >> m;
+        cout << "Nhap M canh u v w:\n";
+        for (int i = 0; i < m; i++) {
+            int u, v, w;
+            cout << "Canh " << i + 1 << ": ";
+            if (!(cin >> u >> v >> w)) return 0;
+            g.addEdge(u, v, w);
+        }
+    }
+    else if (initialChoice == 2) {
+        g = loadGraph("graph.txt");
+        if (g.n == 0) {
+            cout << "Khong the tai do thi, chuyen sang che do nhap tay.\n";
+            cout << "Nhap so dinh (N): "; if (!(cin >> n)) return 0;
+            cout << "Do thi co huong? (0=Vo huong, 1=Co huong): ";
+            int dirFlag; cin >> dirFlag;
+            g = Graph(n, dirFlag != 0);
+        }
+    }
+    else {
+        cout << "Lua chon khong hop le. Thoat chuong trinh.\n";
+        return 0;
     }
 
 
-
-
-
-
+    // -------------------------------------------------------------
+    // VÒNG LẶP MENU CHÍNH
+    // -------------------------------------------------------------
     int choice;
-
-
     do
     {
-        cout << "\n===== MENU =====\n";
-        cout << "1. Ve do thi\n";
-        cout << "2. Luu do thi\n";
-        cout << "3. Tim duong di ngan nhat (Dijkstra)\n";
-        cout << "4. BFS\n";
-        cout << "5. DFS\n";
-        cout << "6. Kiem tra do thi 2 phia (Bipartite)\n";
-        cout << "7. Chuyen MT ke -> DS ke\n";
-        cout << "8. Chuyen DS ke -> MT ke\n";
-        cout << "9. Chuyen MT ke -> DS canh\n";
-        cout << "10. Chuyen DS canh -> MT ke\n";
-        cout << "11. Chuyen DS ke -> DS canh\n";
-        cout << "12. Chuyen DS canh -> DS ke\n";
-        cout << "13. Prim\n";
-        cout << "14. Kruskal\n";
-        cout << "15. Ford-Fulkerson (Edmonds-Karp)\n";
-        cout << "16. Fleury (Euler)\n";
-        cout << "17. Hierholzer (Euler)\n";
-        cout << "0. Thoat\n";
-        cout << "Choose: ";
-        cin >> choice;
+        // Hien thi trang thai do thi
+        cout << "\n======================================================\n";
+        cout << "DO THI HIEN TAI: " << g.n << " dinh | "
+            << (g.directed ? "Co Huong" : "Vo Huong") << "\n";
+        cout << "===================== MENU CHINH =====================\n";
 
+
+        cout << "  1. Ve do thi (ASCII Visualization)\n";
+        cout << "  2. Luu do thi ra file (graph.txt)\n";
+        cout << "  3. In do thi (Danh sach ke)\n";
+
+
+        cout << "  4. Tim duong di ngan nhat (Dijkstra)\n";
+        cout << "  5. Duyet do thi BFS (Breadth-First Search)\n";
+        cout << "  6. Duyet do thi DFS (Depth-First Search)\n";
+
+
+        cout << "  7. Cay khung nho nhat Prim (MST)\n";
+        cout << "  8. Cay khung nho nhat Kruskal (MST)\n";
+        cout << "  9. Kiem tra do thi 2 phia (Bipartite)\n";
+
+
+        cout << " 10. Luong cuc dai Ford-Fulkerson (Edmonds-Karp)\n";
+        cout << " 11. Chu trinh Euler Fleury\n";
+        cout << " 12. Chu trinh Euler Hierholzer\n";
+
+        // Nhóm 5: Chuyển đổi Biểu diễn
+        cout << " 13. Chuyen doi giua cac bieu dien (MT ke, DS ke, DS canh)\n";
+        cout << " 0. Thoat chuong trinh\n";
+        cout << "======================================================\n";
+        cout << "Chon chuc nang: ";
+        if (!(cin >> choice)) break;
 
         switch (choice)
         {
         case 1: { drawGraphASCII(g); break; }
-        case 2: {
-            saveGraph(g, "graph.txt"); break;
-        }
-        case 3: {
+        case 2: { saveGraph(g, "graph.txt"); break; }
+        case 3: { drawGraph(g); break; }
+        case 4: {
             int s;
             cout << "Nhap dinh bat dau (source): ";
-            cin >> s;
-            dijkstra(g, s);
-            break;
-        }
-        case 4: {
-            int s; cout << "Nhap dinh bat dau BFS: "; cin >> s;
-            BFS(g, s);
+            if (cin >> s) dijkstra(g, s);
             break;
         }
         case 5: {
-            int s; cout << "Nhap dinh bat dau DFS: "; cin >> s;
-            DFS(g, s);
+            int s; cout << "Nhap dinh bat dau BFS: ";
+            if (cin >> s) BFS(g, s);
             break;
         }
-
-
-        case 6: { cout << (isBipartite(g) ? "YES\n" : "NO\n"); break; }
+        case 6: {
+            int s; cout << "Nhap dinh bat dau DFS: ";
+            if (cin >> s) DFS(g, s);
+            break;
+        }
         case 7: {
-            int n;
-            cout << "Nhap n: ";
-            cin >> n;
-            vector<vector<int>> mat(n, vector<int>(n));
-            cout << "Nhap ma tran ke:\n";
-            for (int i = 0; i < n; i++)
-                for (int j = 0; j < n; j++)
-                    cin >> mat[i][j];
-
-
-            Graph ng = matrixToAdjList(mat, g.directed);
-            printAdjList(ng.adj);
+            cout << "\n=== KET QUA PRIM (MST) ===\n";
+            auto mstEdges = primMST(g);
+            int totalWeight = 0;
+            for (const auto& e : mstEdges) totalWeight += e.w;
+            cout << "Tong trong so MST: " << totalWeight << endl;
+            cout << "=============================\n";
             break;
         }
-        case 8: {
-            auto mat = adjListToMatrix(g);
-            printMatrix(mat);
-            break;
-        }
-        case 9: {
-            int n;
-            cout << "Nhap n: ";
-            cin >> n;
-            vector<vector<int>> mat(n, vector<int>(n));
-            for (int i = 0; i < n; i++)
-                for (int j = 0; j < n; j++) 
-                    cin >> mat[i][j];
-
-
-            auto edges = matrixToEdgeList(mat, g.directed);
-            printEdges(edges);
-            break;
-        }
+        case 8: { Kruskal(g); break; }
+        case 9: { cout << "Ket qua: " << (isBipartite(g) ? "YES (Do thi 2 phia)\n" : "NO (Khong phai do thi 2 phia)\n"); break; }
         case 10: {
-            int n, m;
-            cout << "Nhap n va so canh: ";
-            cin >> n >> m;
-            vector<Edge> edges(m);
-            for (int i = 0; i < m; i++)
-                cin >> edges[i].u >> edges[i].v >> edges[i].w;
-
-
-            auto mat = edgeListToMatrix(n, edges, g.directed);
-            printMatrix(mat);
+            int s, t;
+            cout << "Nhap dinh Nguon (s) va Dich (t): ";
+            if (cin >> s >> t) EdmondsKarp(g, s, t);
             break;
         }
         case 11: {
-            auto edges = listToEdges(g.adj);
-            printEdges(edges);
+            int s; cout << "Nhap dinh bat dau cho chu trinh Euler: ";
+            if (cin >> s) Fleury(g, s);
             break;
         }
         case 12: {
-            int n, m;
-            cout << "Nhap n va so canh: ";
-            cin >> n >> m;
-            vector<Edge> edges(m);
-            for (int i = 0; i < m; i++)
-                cin >> edges[i].u >> edges[i].v >> edges[i].w;
-
-
-            auto adj = edgeListToAdjList(n, edges, g.directed);
-            printAdjList(adj);
+            int s; cout << "Nhap dinh bat dau cho chu trinh Euler: ";
+            if (cin >> s) Hierholzer(g, s);
             break;
         }
+        case 13: {
+            int subChoice;
+            cout << "\n---- MENU CHUYEN DOI ----\n";
+            cout << " 1. MT ke -> DS ke\n";
+            cout << " 2. DS ke -> MT ke\n";
+            cout << " 3. MT ke -> DS canh\n";
+            cout << " 4. DS canh -> MT ke\n";
+            cout << " 5. DS ke -> DS canh\n";
+            cout << " 6. DS canh -> DS ke\n";
+            cout << " Chon: ";
+            cin >> subChoice;
+            // Thuc hien cac chuc nang chuyen doi nhu trong code goc cua ban
+            switch (subChoice) {
+            case 1:
+                {
+                    int n;
+                    cout << "Nhap N: ";
+                    cin >> n;
+                    vector<vector<int>> mat(n, vector<int>(n));
+                    cout << "Nhap ma tran ke (NxN):\n";
+                    for (int i = 0; i < n; i++)
+                        for (int j = 0; j < n; j++)
+                            cin >> mat[i][j];
 
 
-        //case 13: primMST(g); break;
-        case 14:{
-               Kruskal(g);
-               break;
-        }
+                    Graph ng = matrixToAdjList(mat, g.directed);
+                    printAdjList(ng.adj);
+                    break;
+                }
+           
+            case 2: {
+                auto mat = adjListToMatrix(g);
+                printMatrix(mat);
+                break;
+            }
+            case 3: {
+                int n;
+                cout << "Nhap n: ";
+                cin >> n;
+                vector<vector<int>> mat(n, vector<int>(n));
+                cout << "Nhap ma tran ke (NxN):\n";
+                for (int i = 0; i < n; i++)
+                    for (int j = 0; j < n; j++)
+                        cin >> mat[i][j];
 
 
-        case 15: {
-            int s, t;
-            cout << "Nhap dinh Nguon (s) va Dich (t): ";
-            cin >> s >> t;
-            EdmondsKarp(g, s, t);
+                auto edges = matrixToEdgeList(mat, g.directed);
+                printEdges(edges);
+                break;
+            }
+            case 4: {
+                int n, m;
+                cout << "Nhap n va so canh: ";
+                cin >> n >> m;
+                vector<Edge> edges(m);
+                for (int i = 0; i < m; i++)
+                    cin >> edges[i].u >> edges[i].v >> edges[i].w;
+
+
+                auto mat = edgeListToMatrix(n, edges, g.directed);
+                printMatrix(mat);
+                break;
+            }
+            case 5: {
+                auto edges = listToEdges(g.adj);
+                printEdges(edges);
+                break;
+            }
+            case 6: {
+                int n, m;
+                cout << "Nhap n va so canh: ";
+                cin >> n >> m;
+                vector<Edge> edges(m);
+                for (int i = 0; i < m; i++)
+                    cin >> edges[i].u >> edges[i].v >> edges[i].w;
+
+
+                auto adj = edgeListToAdjList(n, edges, g.directed);
+                printAdjList(adj);
+                break;
+            }
+            default: cout << "Lua chon khong hop le.\n"; break;
+            }
             break;
         }
-        case 16: { int s; cout << "nhap dinh bat dau cho chu trinh Euler (khac 0): "; cin >> s; Fleury(g, s);  break; }
-        case 17: { int s; cout << "nhap dinh bat dau cho chu trinh Euler: "; cin >> s; Hierholzer(g, s);  break; }
         case 0: {
-            cout << "Cam on ban da su dung ung dung!";
+            cout << "Cam on ban da su dung ung dung! Tam biet.\n";
             break;
         }
         default:
-            cout << "Invalid choice. Please try again. \n";
-    }
-} while (choice != 0);
+            cout << "Lua chon khong hop le. Vui long thu lai. \n";
+        }
+    } while (choice != 0);
 
-
-return 0;
-}     
+    return 0;
+}
